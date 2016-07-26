@@ -11,3 +11,8 @@ AMAZON.StartOverIntent start
 AMAZON.StartOverIntent start new game
 AMAZON.StartOverIntent start a game
 AMAZON.StartOverIntent start a new  game
+
+AMAZON.HelpIntent help
+AMAZON.HelpIntent help me
+AMAZON.HelpIntent what can I ask
+AMAZON.HelpIntent what can I do

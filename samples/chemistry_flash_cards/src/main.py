@@ -460,7 +460,7 @@ def handle_get_help_request(intent, session):
 
 def handle_finish_session_request(intent, session):
     """
-    End the session with a "Good bye!"
+    End the session with a message
     if the user wants to quit the game
     """
     attributes = session['attributes']
