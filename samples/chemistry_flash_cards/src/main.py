@@ -482,7 +482,7 @@ def is_answer_slot_valid(intent):
 
 def build_speechlet_response(title, output, reprompt_text, should_end_session):
     return {
-        'output_speech': {
+        'outputSpeech': {
             'type': 'PlainText',
             'text': output
         },
@@ -492,7 +492,7 @@ def build_speechlet_response(title, output, reprompt_text, should_end_session):
             'content': output
         },
         'reprompt': {
-            'output_speech': {
+            'outputSpeech': {
                 'type': 'PlainText',
                 'text': reprompt_text
             }
@@ -503,12 +503,12 @@ def build_speechlet_response(title, output, reprompt_text, should_end_session):
 
 def build_speechlet_response_without_card(output, reprompt_text, should_end_session):
     return {
-        'output_speech': {
+        'outputSpeech': {
             'type': 'PlainText',
             'text': output
         },
         'reprompt': {
-            'output_speech': {
+            'outputSpeech': {
                 'type': 'PlainText',
                 'text': reprompt_text
             }
