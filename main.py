@@ -163,10 +163,7 @@ def lambda_handler(event, context):
     # if (event['session']['application']['applicationId'] !=
     #         "amzn1.echo-sdk-ams.app.[unique-value-here]"):
     #     raise ValueError("Invalid Application ID")
-    if (event['session']['application']['applicationId'] != "amzn1.ask.skill.xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"):
-        raise ValueError("Invalid Application ID")
-
-
+    
 
     if event['session']['new']:
         on_session_started({'requestId': event['request']['requestId']},
@@ -375,13 +372,25 @@ def handle_answer_request(intent, session):
         reprompt_text = speech_output
         return build_response(attributes, build_speechlet_response(CARD_TITLE,
                               speech_output, reprompt_text, should_end_session))
-    elif not answer_slot_valid and user_gave_up == "DontKnowIntent":
-        # If the user provided answer isn't a number > 0 and < ANSWER_COUNT,
+        #changed 'and' to 'or'
+    elif not answer_slot_valid or user_gave_up == "DontKnowIntent":
+        # If the user provided answer isn't a know element,
         # return an error message to the user. Remember to guide the user
         # into providing correct values.
-        reprompt = session['attributes']['speech_output']
-        speech_output = "Your answer must be a known element " + reprompt
-        return build_response(session['attributes'], build_speechlet_response(CARD_TITLE, speech_output, reprompt_text, should_end_session))
+        #added _text
+        # encapsulated this code in 'try' to avoid errors on reserved words.
+        try:
+            reprompt_text = session['attributes']['speech_output']
+            #added _text
+            speech_output = "Your answer must be a known element " + reprompt_text
+        except:
+            # handles inappropriate reply
+            reprompt_text = "say begin a new game or stop"
+            speech_output = "say begin a new game or stop"
+            attributes['user_prompted_to_continue'] = True
+            
+        
+        return build_response(attributes, build_speechlet_response(CARD_TITLE, speech_output, reprompt_text, should_end_session))
     else:
         game_questions = session['attributes']['questions']
         correct_answer_index = session['attributes']['correct_answer_index']
@@ -397,14 +406,14 @@ def handle_answer_request(intent, session):
             if user_gave_up != "DontKnowIntent":
                 speech_output_analysis = "wrong. "
             speech_output_analysis = (speech_output_analysis +
-                                      "The correct answer is " +
-                                      correct_answer_text + ".")
+                                      "<break time=\"300ms\"/>The correct answer is " +
+                                      correct_answer_text)
 
         # if current_questions_index is 4, we've reached 5 questions
         # (zero-indexed) and can exit the game session
         if current_questions_index == GAME_LENGTH - 1:
-            speech_output = "" if intent['name'] == "DontKnowIntent" else "That answer is "
-            speech_output = (speech_output + speech_output_analysis + " <break time=\"2s\"/> You got "
+            speech_output = "" if intent['name'] == "DontKnowIntent" else "<break time=\"400ms\"/>That answer is "
+            speech_output = (speech_output + speech_output_analysis + " <break time=\"1s\"/> You got "
                              + str(current_score) + " out of " + str(GAME_LENGTH)
                              + " questions correct. <break time=\"1s\"/> Thank you for learning Flash"
                              " Cards with Alexa!")
@@ -422,9 +431,9 @@ def handle_answer_request(intent, session):
             for i in range(0, ANSWER_COUNT):
                 reprompt_text = reprompt_text + ""
 
-            speech_output = "" if user_gave_up == "DontKnowIntent" else "That answer is "
+            speech_output = "" if user_gave_up == "DontKnowIntent" else "<break time=\"1s\"/>That answer is "
             speech_output = (speech_output + speech_output_analysis +
-                             "Your score is " +
+                             "<break time=\"350ms\"/>Your score is " +
                              str(current_score) + '. ' + reprompt_text)
             attributes = {"speech_output": reprompt_text,
                           "reprompt_text": reprompt_text,
@@ -480,9 +489,12 @@ def handle_finish_session_request(intent, session):
 
 
 def is_answer_slot_valid(intent):
-    if 'Answer' in intent['slots'].keys() and 'value' in intent['slots']['Answer'].keys():
-        return True
-    else:
+    try:
+        if 'Answer' in intent['slots'].keys() and 'value' in intent['slots']['Answer'].keys():
+            return True
+        else:
+            return False
+    except:
         return False
 
 
