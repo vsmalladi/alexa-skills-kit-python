@@ -51,8 +51,8 @@ QUESTIONS = [
 
 def lambda_handler(event, context):
     """
-    Route the incoming request based on type (LaunchRequest, IntentRequest,
-    etc.) The JSON body of the request is provided in the event parameter.
+    Route the incoming request based on type (LaunchRequest, IntentRequest, etc).
+    The JSON body of the request is provided in the event parameter.
     """
     print("event.session.application.applicationId=" +
           event['session']['application']['applicationId'])
@@ -79,19 +79,14 @@ def lambda_handler(event, context):
 
 
 def on_session_started(session_started_request, session):
-    """Called when the session starts"""
-
+    """Called when the session starts."""
     print("on_session_started requestId=" +
           session_started_request['requestId'] + ", sessionId=" +
           session['sessionId'])
 
 
 def on_launch(launch_request, session):
-    """
-    Called when the user launches the skill without specifying what they
-    want.
-    """
-
+    """Called when the user launches the skill without specifying what they want."""
     print("on_launch requestId=" + launch_request['requestId'] +
           ", sessionId=" + session['sessionId'])
     # Dispatch to your skill's launch
@@ -99,8 +94,7 @@ def on_launch(launch_request, session):
 
 
 def on_intent(intent_request, session):
-    """Called when the user specifies an intent for this skill"""
-
+    """Called when the user specifies an intent for this skill."""
     print("on_intent requestId=" + intent_request['requestId'] +
           ", sessionId=" + session['sessionId'])
 
@@ -108,7 +102,7 @@ def on_intent(intent_request, session):
     intent_name = intent_request['intent']['name']
 
     # handle yes/no intent after the user has been prompted
-    if 'attributes' in session.keys() and 'user_prompted_to_continue' in session['attributes'].keys():
+    if session.get('attributes', {}).get('user_prompted_to_continue'):
         del session['attributes']['user_prompted_to_continue']
         if intent_name == 'AMAZON.NoIntent':
             return handle_finish_session_request(intent, session)
@@ -151,29 +145,23 @@ def on_session_ended(session_ended_request, session):
 
 
 def get_welcome_response():
-    """
-    If we wanted to initialize the session to have some attributes we could
-    add those here
-    """
-
-    intro = ("Let's play {}. I will ask you ".format(SKILL_NAME) +
-                     str(GAME_LENGTH) + " questions, try to get as many right " +
-                     "as you can. Just say the answer. Let's begin. ")
+    """If we wanted to initialize the session to have some attributes we could add those here."""
+    intro = ("Let's play {}. ".format(SKILL_NAME) +
+             "I will ask you {} questions. ".format(GAME_LENGTH) +
+             "Try to get as many right as you can. Just say the answer. Let's begin. ")
     should_end_session = False
-
     game_questions = populate_game_questions()
+    starting_index = 0
 
-    current_questions_index = 0
-
-    spoken_question = QUESTIONS[game_questions[current_questions_index]].keys()[0]
+    spoken_question = QUESTIONS[game_questions[starting_index]].keys()[0]
 
     speech_output = intro + spoken_question
     attributes = {"speech_output": speech_output,
                   "reprompt_text": spoken_question,
-                  "current_questions_index": current_questions_index,
+                  "current_questions_index": starting_index,
                   "questions": game_questions,
                   "score": 0,
-                  "correct_answer_text": QUESTIONS[game_questions[current_questions_index]].values()[0][0]
+                  "correct_answer_text": QUESTIONS[game_questions[starting_index]].values()[0][0]
                   }
 
     return build_response(attributes, build_speechlet_response(
@@ -227,7 +215,11 @@ def handle_answer_request(intent, session):
         # into providing correct values.
         reprompt = session['attributes']['speech_output']
         speech_output = "Your answer must be a known element " + reprompt
-        return build_response(session['attributes'], build_speechlet_response(SKILL_NAME, speech_output, reprompt_text, should_end_session))
+        return build_response(
+            session['attributes'],
+            build_speechlet_response(
+                SKILL_NAME, speech_output, reprompt_text, should_end_session
+            ))
     else:
         game_questions = session['attributes']['questions']
         current_score = session['attributes']['score']
@@ -249,13 +241,16 @@ def handle_answer_request(intent, session):
         # (zero-indexed) and can exit the game session
         if current_questions_index == GAME_LENGTH - 1:
             speech_output = "" if intent['name'] == "DontKnowIntent" else "That answer is "
-            speech_output = (speech_output + speech_output_analysis + "You got "
-                             + str(current_score) + " out of " + str(GAME_LENGTH)
-                             + " questions correct. Thank you for playing {} with Alexa!".format(SKILL_NAME))
+            speech_output = (speech_output + speech_output_analysis +
+                             "You got {} out of {} correct. ".format(current_score, GAME_LENGTH) +
+                             "Thank you for playing {} with Alexa!".format(SKILL_NAME))
             reprompt_text = None
             should_end_session = True
-            return build_response(session['attributes'],
-                                  build_speechlet_response(SKILL_NAME, speech_output, reprompt_text, should_end_session))
+            return build_response(
+                session['attributes'],
+                build_speechlet_response(
+                    SKILL_NAME, speech_output, reprompt_text, should_end_session
+                ))
         else:
             current_questions_index += 1
             spoken_question = QUESTIONS[game_questions[current_questions_index]].keys()[0]
@@ -270,7 +265,7 @@ def handle_answer_request(intent, session):
                           "current_questions_index": current_questions_index,
                           "questions": game_questions,
                           "score": current_score,
-                          "correct_answer_text": QUESTIONS[game_questions[current_questions_index]].values()[0][0]
+                          "correct_answer_text": QUESTIONS[game_questions[current_questions_index]].values()[0][0]  # noqa
                           }
 
             return build_response(attributes,
@@ -280,8 +275,8 @@ def handle_answer_request(intent, session):
 
 def handle_repeat_request(intent, session):
     """
-    Repeat the previous speech_output and reprompt_text from the
-    session['attributes'] if available else start a new game session
+    Repeat the previous speech_output and reprompt_text from the session['attributes'].
+    If available, else start a new game session.
     """
     if 'attributes' not in session or 'speech_output' not in session['attributes']:
         return get_welcome_response()
@@ -290,8 +285,10 @@ def handle_repeat_request(intent, session):
         speech_output = attributes['speech_output']
         reprompt_text = attributes['reprompt_text']
         should_end_session = False
-        return build_response(attributes,
-                              build_speechlet_response_without_card(speech_output, reprompt_text, should_end_session))
+        return build_response(
+            attributes,
+            build_speechlet_response_without_card(speech_output, reprompt_text, should_end_session)
+        )
 
 
 def handle_get_help_request(intent, session):
@@ -300,20 +297,22 @@ def handle_get_help_request(intent, session):
                      "you can say exit... What can I help you with?")
     reprompt_text = "What can I help you with?"
     should_end_session = False
-    return build_response(attributes, build_speechlet_response(SKILL_NAME, speech_output, reprompt_text, should_end_session))
+    return build_response(
+        attributes,
+        build_speechlet_response(SKILL_NAME, speech_output, reprompt_text, should_end_session)
+    )
 
 
 def handle_finish_session_request(intent, session):
-    """
-    End the session with a message
-    if the user wants to quit the game
-    """
+    """End the session with a message if the user wants to quit the game."""
     attributes = session['attributes']
     reprompt_text = None
     speech_output = "Thanks for playing {}!".format(SKILL_NAME)
     should_end_session = True
-    return build_response(attributes,
-                          build_speechlet_response_without_card(speech_output, reprompt_text, should_end_session))
+    return build_response(
+        attributes,
+        build_speechlet_response_without_card(speech_output, reprompt_text, should_end_session)
+    )
 
 
 def is_answer_slot_valid(intent):
