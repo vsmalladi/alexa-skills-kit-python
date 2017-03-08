@@ -156,8 +156,8 @@ def get_welcome_response():
     add those here
     """
 
-    intro = ("Let's test your skills with FlashCards. I will ask you " +
-                     str(GAME_LENGTH) + " questions, try to get as many right" +
+    intro = ("Let's play {}. I will ask you ".format(SKILL_NAME) +
+                     str(GAME_LENGTH) + " questions, try to get as many right " +
                      "as you can. Just say the answer. Let's begin. ")
     should_end_session = False
 
@@ -249,10 +249,9 @@ def handle_answer_request(intent, session):
         # (zero-indexed) and can exit the game session
         if current_questions_index == GAME_LENGTH - 1:
             speech_output = "" if intent['name'] == "DontKnowIntent" else "That answer is "
-            speech_output = (speech_output + speech_output_analysis + "Yog got "
+            speech_output = (speech_output + speech_output_analysis + "You got "
                              + str(current_score) + " out of " + str(GAME_LENGTH)
-                             + " questions correct. Thank you for learning Flash"
-                             " Cards with Alexa!")
+                             + " questions correct. Thank you for playing {} with Alexa!".format(SKILL_NAME))
             reprompt_text = None
             should_end_session = True
             return build_response(session['attributes'],
@@ -311,7 +310,7 @@ def handle_finish_session_request(intent, session):
     """
     attributes = session['attributes']
     reprompt_text = None
-    speech_output = "Thanks for playing Flash Cards!"
+    speech_output = "Thanks for playing {}!".format(SKILL_NAME)
     should_end_session = True
     return build_response(attributes,
                           build_speechlet_response_without_card(speech_output, reprompt_text, should_end_session))
