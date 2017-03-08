@@ -13,137 +13,40 @@ import math
 import random
 
 
+# ------- Skill specific business logic -------
+ANSWER_COUNT = 1
+GAME_LENGTH = 5
+CARD_TITLE = "Chemistry Flash Cards"  # Be sure to change this for your skill.
+
 # When editing your questions pay attention to your punctuation.
 # Make sure you use question marks or periods.
 # Make sure the first answer is the correct one.
-# Set at least 4 answers, any extras will be shuffled in.
-questions = [
-    {
-        "What is A C?": [
-            "actinium"
-        ]
-    },
-    {
-        "What is A L?": [
-            "aluminum"
-
-        ]
-    },
-    {
-        "What is A M?": [
-            "americium"
-        ]
-    },
-    {
-        "What is S B?": [
-            "antimony"
-        ]
-    },
-    {
-        "What is A R?": [
-            "argon"
-        ]
-    },
-    {
-        "What is A S?": [
-            "arsenic"
-        ]
-    },
-    {
-        "What is A T?": [
-            "astatine"
-        ]
-    },
-    {
-        "What is B A?": [
-            "barium"
-        ]
-    },
-    {
-        "What is B K?": [
-            "berkelium"
-        ]
-    },
-    {
-        "What is B E?": [
-            "beryllium"
-        ]
-    },
-    {
-        "What is B I?": [
-            "bismuth"
-        ]
-    },
-    {
-        "What is B H?": [
-            "bohrium"
-        ]
-    },
-    {
-        "What is B?": [
-            "boron"
-        ]
-    },
-    {
-        "What is B R ?": [
-            "bromine"
-        ]
-    },
-    {
-        "What is C D ?": [
-            "cadmium"
-        ]
-    },
-    {
-        "What is C A ?": [
-            "calcium"
-        ]
-    },
-    {
-        "What is C F ?": [
-            "californium"
-        ]
-    },
-    {
-        "What is C ?": [
-            "carbon"
-        ]
-    },
-    {
-        "What is C E ?": [
-            "cerium"
-        ]
-    },
-    {
-        "What is C S ?": [
-            "cesium"
-        ]
-    },
-    {
-        "What is C L ?": [
-            "chlorine"
-        ]
-    },
-    {
-        "What is C R ?": [
-            "chromium"
-        ]
-    },
-    {
-        "What is C O ?": [
-            "cobalt"
-        ]
-    },
-    {
-        "What is C U ?": [
-            "copper"
-        ]
-    },
-    {
-        "What is C M?": [
-            "curium"
-        ]
-    },
+QUESTIONS = [
+    {"What is A C?": ["actinium"]},
+    {"What is A L?": ["aluminum"]},
+    {"What is A M?": ["americium"]},
+    {"What is S B?": ["antimony"]},
+    {"What is A R?": ["argon"]},
+    {"What is A S?": ["arsenic"]},
+    {"What is A T?": ["astatine"]},
+    {"What is B A?": ["barium"]},
+    {"What is B K?": ["berkelium"]},
+    {"What is B E?": ["beryllium"]},
+    {"What is B I?": ["bismuth"]},
+    {"What is B H?": ["bohrium"]},
+    {"What is B?": ["boron"]},
+    {"What is B R ?": ["bromine"]},
+    {"What is C D ?": ["cadmium"]},
+    {"What is C A ?": ["calcium"]},
+    {"What is C F ?": ["californium"]},
+    {"What is C ?": ["carbon"]},
+    {"What is C E ?": ["cerium"]},
+    {"What is C S ?": ["cesium"]},
+    {"What is C L ?": ["chlorine"]},
+    {"What is C R ?": ["chromium"]},
+    {"What is C O ?": ["cobalt"]},
+    {"What is C U ?": ["copper"]},
+    {"What is C M?": ["curium"]},
 ]
 
 
@@ -245,12 +148,6 @@ def on_session_ended(session_ended_request, session):
           ", sessionId=" + session['sessionId'])
     # add cleanup logic here
 
-# ------- Skill specific business logic -------
-
-ANSWER_COUNT = 1
-GAME_LENGTH = 5
-CARD_TITLE = "Chemistry Flash Cards"  # Be sure to change this for your skill.
-
 # --------------- Functions that control the skill's behavior -------------
 
 
@@ -273,7 +170,7 @@ def get_welcome_response():
     correct_answer_index = math.floor(random.random() * (ANSWER_COUNT))
     round_answers = populate_round_answers(game_questions[current_questions_index], 0, correct_answer_index)
 
-    spoken_question = questions[game_questions[current_questions_index]].keys()[0]
+    spoken_question = QUESTIONS[game_questions[current_questions_index]].keys()[0]
     reprompt_text = spoken_question
 
     # Update code to deal with multiple choice answers
@@ -287,7 +184,7 @@ def get_welcome_response():
                   "correct_answer_index": correct_answer_index + 1,
                   "questions": game_questions,
                   "score": 0,
-                  "correct_answer_text": questions[game_questions[current_questions_index]].values()[0][0]
+                  "correct_answer_text": QUESTIONS[game_questions[current_questions_index]].values()[0][0]
                   }
 
     return build_response(attributes, build_speechlet_response(
@@ -297,7 +194,7 @@ def get_welcome_response():
 def populate_game_questions():
     game_questions = []
     index_list = []
-    index = len(questions)
+    index = len(QUESTIONS)
 
     if GAME_LENGTH > index:
         raise ValueError("Invalid Game Length")
@@ -328,7 +225,7 @@ def populate_round_answers(game_question_indexes, correct_answer_index, correct_
     """
 
     answers = []
-    answers_copy = questions[game_question_indexes].values()[0]
+    answers_copy = QUESTIONS[game_question_indexes].values()[0]
 
     index = len(answers_copy)
 
@@ -406,7 +303,7 @@ def handle_answer_request(intent, session):
                                   build_speechlet_response(CARD_TITLE, speech_output, reprompt_text, should_end_session))
         else:
             current_questions_index += 1
-            spoken_question = questions[game_questions[current_questions_index]].keys()[0]
+            spoken_question = QUESTIONS[game_questions[current_questions_index]].keys()[0]
             # Generate a random index for the correct answer, from 0 to 3
             correct_answer_index = math.floor(random.random() * (ANSWER_COUNT))
             round_answers = populate_round_answers(game_questions[current_questions_index], current_questions_index, correct_answer_index)
@@ -424,7 +321,7 @@ def handle_answer_request(intent, session):
                           "correct_answer_index": correct_answer_index + 1,
                           "questions": game_questions,
                           "score": current_score,
-                          "correct_answer_text": questions[game_questions[current_questions_index]].values()[0][0]
+                          "correct_answer_text": QUESTIONS[game_questions[current_questions_index]].values()[0][0]
                           }
 
             return build_response(attributes,
