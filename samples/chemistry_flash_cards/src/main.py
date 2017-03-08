@@ -11,6 +11,7 @@ http://amzn.to/1LGWsLG
 from __future__ import print_function
 import math
 import random
+import string
 
 
 # ------- Skill specific business logic -------
@@ -20,6 +21,9 @@ SKILL_NAME = "Chemistry Flash Cards"
 # When editing your questions pay attention to your punctuation.
 # Make sure you use question marks or periods.
 # Make sure the first answer is the correct one.
+
+# If there are multiple valid answers, provide all of them in the answers array.
+#   {"Name an element with 8 valence electrons.": ["Neon", "Argon", "Krypton", "Xenon", "Radon"]},
 QUESTIONS = [
     {"What is A C?": ["actinium"]},
     {"What is A L?": ["aluminum"]},
@@ -161,7 +165,7 @@ def get_welcome_response():
                   "current_questions_index": starting_index,
                   "questions": game_questions,
                   "score": 0,
-                  "correct_answer_text": QUESTIONS[game_questions[starting_index]].values()[0][0]
+                  "correct_answers": QUESTIONS[game_questions[starting_index]].values()[0]
                   }
 
     return build_response(attributes, build_speechlet_response(
@@ -196,7 +200,7 @@ def populate_game_questions():
 def handle_answer_request(intent, session):
     attributes = {}
     should_end_session = False
-    answer_slot_valid = is_answer_slot_valid(intent)
+    answer = intent['slots'].get('Answer', {}).get('value')
     user_gave_up = intent['name']
 
     if 'attributes' in session.keys() and 'questions' not in session['attributes'].keys():
@@ -209,7 +213,7 @@ def handle_answer_request(intent, session):
         reprompt_text = speech_output
         return build_response(attributes, build_speechlet_response(SKILL_NAME,
                               speech_output, reprompt_text, should_end_session))
-    elif not answer_slot_valid and user_gave_up == "DontKnowIntent":
+    elif not answer and user_gave_up == "DontKnowIntent":
         # If the user provided answer isn't a number > 0 and < ANSWER_COUNT,
         # return an error message to the user. Remember to guide the user
         # into providing correct values.
@@ -224,10 +228,10 @@ def handle_answer_request(intent, session):
         game_questions = session['attributes']['questions']
         current_score = session['attributes']['score']
         current_questions_index = session['attributes']['current_questions_index']
-        correct_answer_text = session['attributes']['correct_answer_text']
+        correct_answers = session['attributes']['correct_answers']
 
         speech_output_analysis = None
-        if answer_slot_valid and intent['slots']['Answer']['value'].lower() == correct_answer_text:
+        if answer and answer.lower() in map(string.lower, correct_answers):
             current_score += 1
             speech_output_analysis = "correct. "
         else:
@@ -235,7 +239,7 @@ def handle_answer_request(intent, session):
                 speech_output_analysis = "wrong. "
             speech_output_analysis = (speech_output_analysis +
                                       "The correct answer is " +
-                                      correct_answer_text + ".")
+                                      correct_answers[0] + ".")
 
         # if current_questions_index is 4, we've reached 5 questions
         # (zero-indexed) and can exit the game session
@@ -265,7 +269,7 @@ def handle_answer_request(intent, session):
                           "current_questions_index": current_questions_index,
                           "questions": game_questions,
                           "score": current_score,
-                          "correct_answer_text": QUESTIONS[game_questions[current_questions_index]].values()[0][0]  # noqa
+                          "correct_answers": QUESTIONS[game_questions[current_questions_index]].values()[0]  # noqa
                           }
 
             return build_response(attributes,
